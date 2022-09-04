@@ -3,7 +3,7 @@ import * as cors from 'cors';
 import Config from './config/dev';
 import IApplicationResources from "../common/IAplicationResources.interface";
 import * as mysql2 from 'mysql2/promise';
-//import RouterRacun from './components/racun/router';
+import RouterRacun from './components/racun/router';
 import KorisnikRouter from './korisnik/router';
 import Router from '../router';
 
@@ -44,7 +44,7 @@ async function main() {
     );
 
     Router.setupRoutes(aplication, resources, [
-        //new RouterRacun(), 
+        new RouterRacun(), 
         new KorisnikRouter(),
         
     ])
