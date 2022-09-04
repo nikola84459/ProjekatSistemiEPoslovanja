@@ -1,0 +1,31 @@
+{
+  "name": "projekat",
+  "version": "1.0.0",
+  "description": "Ovo je projekat iz predmeta Praktikum - Sistemi E-poslovanja",
+  "main": "index.js",
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "npm run clean && tsc",
+    "start": "npm run build && node ./dist/main.js",
+    "start:dev": "ts-node-dev --respawn -- src/main.ts"
+  },
+  "author": "2017270241, Nikola Vidović",
+  "license": "ISC",
+  "dependencies": {
+    "ajv": "^8.11.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.1",
+    "install": "^0.13.0",
+    "jsonwebtoken": "^8.5.1",
+    "mysql2": "^2.3.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/node": "^18.7.14",
+    "eslint": "^8.23.0",
+    "rimraf": "^3.0.2",
+    "ts-node-dev": "^2.0.0",
+    "tsc": "^2.0.4",
+    "typescript": "^4.8.2"
+  }
+}
