@@ -1,6 +1,7 @@
 import * as mysql2 from 'mysql2/promise';
 import IErrorResponse from '../../common/IErrorResponse.interface';
-import RacunModel from './model';
+import ValutaService from '../valuta/service';
+import RacunModel, { RacunValuta } from './model';
 
 class RacunService {
     private db: mysql2.Connection;
@@ -21,7 +22,8 @@ class RacunService {
       item.tip = row?.tip;
       item.korisnik_id = row?.korisnik_id
 
-          
+      item.racun_valuta = await this.getByRacunValuta(item.racun_id);
+       
       return item;
 
     }
@@ -92,6 +94,40 @@ class RacunService {
          }
          
          return racuni;
+    }
+
+    public async getByRacunValuta(racunId: number): Promise<RacunValuta[]> {
+        const sql: string = `SELECT
+                                *
+                            FROM
+                                racun_valuta
+
+                            INNER JOIN valuta on racun_valuta.valuta_id = valuta.valuta_id   
+
+                            WHERE
+                                racun_valuta.racun_id = ?`
+        const [ rows ] = await this.db.execute(sql, [racunId]);
+        
+        if(Array.isArray(rows)) {
+            const valutaService: ValutaService = new ValutaService(this.db);
+            return rows.map(row => {
+                return {    
+                    racun_valuta_id: row?.racun_valuta_id,
+                    racun_id: row?.racun_id,
+                    valuta_id: row?.valuta_id,
+                    valutaa: {
+                        valuta_id: row?.valuta_id,
+                        naziv: row?.naziv,
+                        sifra: row?.sifra,
+                        srednji_kurs: +(row?.srednji_kurs),
+                        kupovni_kurs: +(row?.kupovni_kurs),
+                        prodajni_kurs: +(row.prodajni_kurs)
+                    },
+                    stanje: row?.stanje
+                }    
+            })
+        
+        }
     }
 
       
