@@ -22,10 +22,14 @@ export default class AuthController extends BaseController {
         const korisnik = await this.services.korisnikService.getByUsername(data.username);
 
         if(korisnik === null) {
-            res.status(404).send("Ne postoji korisnik sa unetim korisničkim imenom");
+            res.status(404).send("Ne postoji korisnik sa unetim korisničkim imenom.");
             
         } else {
             if(korisnik instanceof KorisnikModel) {
+                if(korisnik.is_aktivan === 0) {
+                    return res.status(400).send("Ne postoji korisnik sa unetim korisničkim imenom.")
+                }
+
                 if(!bcrypt.compareSync(data.password, (await korisnik).password_hash)) {
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     return res.status(400).send("Šifra se ne poklapa sa korisničkim imenom.")
@@ -67,6 +71,7 @@ export default class AuthController extends BaseController {
                 res.send({
                     authToken: authToken,
                     refreshToken: refreshToken,
+                    isPrvaPrijava: +(korisnik.is_prva_prijava)
                 });
             }
         }    
@@ -83,7 +88,7 @@ export default class AuthController extends BaseController {
             if(sluzbenik instanceof SluzbenikModel) {
                 if(!bcrypt.compareSync(data.password, (await sluzbenik).password_hash)) {
                     await new Promise(resolve => setTimeout(resolve, 1000));
-                    return res.status(403).send("Šifra se ne poklapa sa korisničkim imenom.")
+                    return res.status(400).send("Šifra se ne poklapa sa korisničkim imenom.")
                 }
 
                 const authTokenData: ITokenData = {
@@ -178,7 +183,16 @@ export default class AuthController extends BaseController {
     }
 
     async vratiUlogu(req: Request, res: Response) {
-        res.send("ok")
+        const korisnik = await this.services.korisnikService.getById(req.authorized.id);
+
+        if(korisnik instanceof KorisnikModel) {
+            if(+(korisnik.is_prva_prijava) === 0 ) {
+                res.send("ok")
+            } else {
+                res.send(400);
+            } 
+        }
+
     }
     
 }
