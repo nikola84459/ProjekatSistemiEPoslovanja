@@ -10,6 +10,15 @@ export default class KorisnikModel implements IModel {
     is_aktivan: any;
     br_licne_karte: string;
     br_telefon: string;
-    adresa: string;
+    mesto_prebivalista: string;
+    ulica_prebivalista: string;
+    broj_prebivalista: string;
     email: string;
+    is_prva_prijava: any;
+    mesto_rodjenja: string;
+    opstina_rodjenja: string;
+    drzava_rodjenja: string;
+    datum_rodjenja: string;
+    datum_kreiranja: string;
+    datum_brisanja: string;
 }

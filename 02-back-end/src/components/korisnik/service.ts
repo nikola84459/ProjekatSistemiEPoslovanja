@@ -18,8 +18,17 @@ export default class KorisnikService extends BaseService<KorisnikModel> {
       item.is_aktivan = row?.is_aktivan;
       item.br_licne_karte = row?.br_licne_karte;
       item.br_telefon = row?.br_telefona;
-      item.adresa = row?.adresa;
+      item.mesto_prebivalista = row?.mesto_prebivalista;
+      item.ulica_prebivalista = row?.ulica_prebivalista;
+      item.broj_prebivalista = row?.broj_prebivalista  
       item.email = row?.email
+      item.is_prva_prijava = row?.is_prva_prijava;
+      item.mesto_rodjenja = row?.mesto_rodjenja;
+      item.opstina_rodjenja = row?.opstina_rodjenja;
+      item.drzava_rodjenja = row?.drzava_rodjenja;
+      item.datum_rodjenja = row?.datum_rodjenja;
+      item.datum_kreiranja = row?.datum_kreiranja;
+      item.datum_brisanja = row?.datum_brisanja;
 
       return item;
     }
@@ -65,14 +74,26 @@ export default class KorisnikService extends BaseService<KorisnikModel> {
         
     }
 
-    public async updatePassword(id: number, password: string): Promise<KorisnikModel | IErrorResponse> {
+    public async updatePassword(id: number, password: string, isPrvaPrijava: boolean): Promise<KorisnikModel | IErrorResponse> {
         return new Promise <KorisnikModel | IErrorResponse> (async reslove => {
-            const sql = `UPDATE
+            let sql = ""
+            if(!isPrvaPrijava) {
+                sql = `UPDATE
                             korisnik
                         SET
                             password_hash = ? 
                         WHERE
                             korisnik_id = ?`
+            } else {
+                sql = `UPDATE
+                            korisnik
+                        SET
+                            password_hash = ?,
+                            is_prva_prijava = 0 
+                        WHERE
+                            korisnik_id = ?`
+            }
+            
             this.db.execute(sql, [password, id])
                 .then(async result => {
                     reslove(await this.getById(id));
@@ -87,7 +108,9 @@ export default class KorisnikService extends BaseService<KorisnikModel> {
         });
     }
 
-    public async add(ime: string, prezime: string, password_hash: string, jmbg: string, brTelefona: string ,brLicneKarte: string, adresa: string, email: string): Promise<KorisnikModel | IErrorResponse> {
+    public async add(ime: string, prezime: string, password_hash: string, username: string, jmbg: string, brTelefona: string ,brLicneKarte: string, mestoPrebivalista: string, 
+                    ulicaPrebivalista: string, brojPrebivalista: string, email: string,
+                    mestoRodjenja: string, opstinaRodjenja: string, drzavaRodjenja: string, datumRodjenja: string, datumKreiranja): Promise<KorisnikModel | IErrorResponse> {
         return new Promise<KorisnikModel | IErrorResponse>(async reslove => {
             const sql = `INSERT
                             korisnik
@@ -100,10 +123,18 @@ export default class KorisnikService extends BaseService<KorisnikModel> {
                             is_aktivan = ?,
                             br_telefona = ?, 
                             br_licne_karte = ?,
-                            adresa = ?,
-                            email = ?`
+                            mesto_prebivalista = ?,
+                            ulica_prebivalista = ?,
+                            broj_prebivalista = ?,
+                            email = ?,
+                            is_prva_prijava = ?,
+                            mesto_rodjenja = ?,
+                            opstina_rodjenja = ?,
+                            drzava_rodjenja = ?,
+                            datum_rodjenja = ?,
+                            datum_kreiranja = ?`
             
-            this.db.execute(sql, [ime, prezime, jmbg, password_hash, jmbg, 0, brTelefona ,brLicneKarte, adresa, email])
+            this.db.execute(sql, [ime, prezime, username, password_hash, jmbg, 0, brTelefona ,brLicneKarte, mestoPrebivalista, ulicaPrebivalista, brojPrebivalista, email, 1, mestoRodjenja, opstinaRodjenja, drzavaRodjenja, datumRodjenja, datumKreiranja])
             .then(async (result: any) => {
                 reslove(await this.getById(result[0].insertId));
             })
@@ -124,7 +155,8 @@ export default class KorisnikService extends BaseService<KorisnikModel> {
                         ime,
                         prezime,
                         jmbg,
-                        br_licne_karte
+                        br_licne_karte,
+                        is_aktivan
                     FROM
                         korisnik
                     WHERE
@@ -155,7 +187,8 @@ export default class KorisnikService extends BaseService<KorisnikModel> {
                         prezime,
                         jmbg,
                         br_licne_karte,
-                        br_telefona
+                        br_telefona,
+                        is_aktivan
                     FROM
                         korisnik
                     WHERE
@@ -170,49 +203,104 @@ export default class KorisnikService extends BaseService<KorisnikModel> {
 
     }
 
-    public async edit(ime: string, prezime: string, brTelefona: string, brLicneKarte: string, adresa: string, korisnikdId: number): Promise<KorisnikModel | IErrorResponse> {
+    public async edit(ime: string, prezime: string, brTelefona: string, brLicneKarte: string, ulica: string, broj: string, mesto: string, korisnikdId: number, 
+        passwordHash: string = null, email: string, username: string = null): Promise<KorisnikModel | IErrorResponse> {
         return new Promise<KorisnikModel | IErrorResponse>(reslove => {
-            const sql = `UPDATE 
+            let sql = "";
+            if(username === null && passwordHash === null) {
+                sql = `UPDATE 
                             korisnik
                         SET
                             ime = ?,
                             prezime = ?,
                             br_telefona = ?,
                             br_licne_karte = ?,
-                            adresa = ?
+                            email = ?,
+                            mesto_prebivalista = ?,
+                            ulica_prebivalista = ?,
+                            broj_prebivalista = ?
                         WHERE
                             korisnik_id = ?`
-            this.db.execute(sql, [ime, prezime, brTelefona, brLicneKarte, adresa, korisnikdId])
-            .then(async res => {
-                reslove(await this.getById(korisnikdId))
-            })
-            .catch(error => {
-                reslove({
-                    errorCode: error?.errno,
-                    errorMessage: error?.sqlMessage
-                });      
-            });            
+                    this.db.execute(sql, [ime, prezime, brTelefona, brLicneKarte, email ,mesto, ulica, broj, korisnikdId])
+                    .then(async res => {
+                        reslove(await this.getById(korisnikdId))
+                    })
+                    .catch(error => {
+                        reslove({
+                            errorCode: error?.errno,
+                            errorMessage: error?.sqlMessage
+                        });      
+                    });                     
+            } else {
+                sql = `UPDATE 
+                            korisnik
+                        SET
+                            ime = ?,
+                            prezime = ?,
+                            br_telefona = ?,
+                            br_licne_karte = ?,
+                            email = ?,
+                            mesto_prebivalista = ?,
+                            ulica_prebivalista = ?,
+                            broj_prebivalista = ?,
+                            password_hash = ?,
+                            username = ?
+                        WHERE
+                            korisnik_id = ?`
+                    this.db.execute(sql, [ime, prezime, brTelefona, brLicneKarte, email ,mesto, ulica, broj, passwordHash, username, korisnikdId])
+                    .then(async res => {
+                        reslove(await this.getById(korisnikdId))
+                    })
+                    .catch(error => {
+                        reslove({
+                            errorCode: error?.errno,
+                            errorMessage: error?.sqlMessage
+                        });      
+                    });                 
+            }
         });
     }
 
-    public async editIsAktivan(korisnikId: number): Promise<KorisnikModel | IErrorResponse> {
+    public async editIsAktivan(korisnikId: number, datumBrisaja: string = null): Promise<KorisnikModel | IErrorResponse> {
         return new Promise<KorisnikModel | IErrorResponse>(reslove => {
-            const sql = `UPDATE 
-                            korisnik
-                        SET
-                            is_aktivan = 0
-                        WHERE
-                            korisnik_id = ?`
-            this.db.execute(sql, [korisnikId])
-            .then(async res => {
-                reslove(this.getById(korisnikId));
-            })
-            .catch(error => {
-                reslove({
-                    errorCode: error?.errno,
-                    errorMessage: error?.sqlMessage
+            if(datumBrisaja === null) {
+                const sql = `UPDATE 
+                                korisnik
+                            SET
+                                is_aktivan = 0
+                            WHERE
+                                korisnik_id = ?`
+                this.db.execute(sql, [korisnikId])
+                .then(async res => {
+                    reslove(this.getById(korisnikId));
+                })
+                .catch(error => {
+                    reslove({
+                        errorCode: error?.errno,
+                        errorMessage: error?.sqlMessage
+                    });      
+                }); 
+            } else {
+                const sql = `UPDATE 
+                                korisnik
+                            SET
+                                is_aktivan = ?,
+                                datum_brisanja = ?
+                            WHERE
+                                korisnik_id = ?`
+                this.db.execute(sql, [0, datumBrisaja, korisnikId])
+                .then(async res => {
+                    reslove(this.getById(korisnikId));
+                })
+                .catch(error => {
+                    console.log(error)
+                    reslove({
+                        errorCode: error?.errno,
+                        errorMessage: error?.sqlMessage
+                    });      
                 });      
-            });            
+            }           
         });
+    
     }
 }

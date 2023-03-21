@@ -39,10 +39,14 @@ export default class KorisnikRouter implements IRouter {
             "/izmeniPodatke",
             AuthMiddleware.getVerifier("sluzbenik"),
             korisnikControler.edit.bind(korisnikControler)); 
-        aplication.post(
+        aplication.get(
             "/obrisiKorisnika",
             AuthMiddleware.getVerifier("sluzbenik"),
-            korisnikControler.obrisiKorisnika.bind(korisnikControler));        
-                
+            korisnikControler.obrisiKorisnika.bind(korisnikControler));    
+        aplication.post(
+            "/editNeaktivan",
+            AuthMiddleware.getVerifier("sluzbenik"),
+            korisnikControler.editNeaktivan.bind(korisnikControler)
+        );
     }
 }    
