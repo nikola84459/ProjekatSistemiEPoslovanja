@@ -40,7 +40,7 @@ async function main() {
                
 
     const resources: IApplicationResources = {
-        databaseConnection: await mysql2.createConnection({
+        databaseconection: await mysql2.createConnection({
             host: Config.database.host,
             port: Config.database.port,
             user: Config.database.user,
@@ -53,7 +53,7 @@ async function main() {
 
     }
 
-    resources.databaseConnection.connect();
+    resources.databaseconection.connect();
 
     resources.services = {
         racunService: new RacunService(resources),
