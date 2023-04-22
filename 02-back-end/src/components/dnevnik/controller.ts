@@ -11,20 +11,7 @@ export default class DnevnikController extends BaseController {
     }
 
     async add(req: Request, res: Response, neextFuntion: NextFunction) {
-        const datum: Date = new Date();
-        const datumIVreme = [
-            datum.getFullYear(),
-            this.padTo2Digits(datum.getMonth() + 1),
-            this.padTo2Digits(datum.getDate()),
-          ].join('-') +
-          ' ' +
-          [
-            this.padTo2Digits(datum.getHours()),
-            this.padTo2Digits(datum.getMinutes()),
-            this.padTo2Digits(datum.getSeconds()),
-          ].join(':')
-        
-
+        const datum = new Date().toLocaleString("sv", {timeZone: 'Europe/Belgrade'})
         const data = req.body as IAddAktivnost;
 
         if(!IAddAktivnostValidator(data)) {
@@ -42,6 +29,6 @@ export default class DnevnikController extends BaseController {
         }
 
         
-        res.send(await this.services.dnevnikService.add(data.stranica, data.radnja, datumIVreme, korisnikId, sluzbenikId, data.ipAdresa, data.grad, data.drzava))          
+        res.send(await this.services.dnevnikService.add(data.stranica, data.radnja, datum, korisnikId, sluzbenikId, data.ipAdresa, data.grad, data.drzava))          
     }
 }
