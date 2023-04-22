@@ -1,13 +1,13 @@
 import Ajv from "ajv";
 
-interface IObrisi {
+interface IEditIsAktivan {
     racunId: number;
     
 }
 
 const ajv = new Ajv();
 
-const IObrisiValidator = ajv.compile({
+const IEditIsAktivanValidator = ajv.compile({
     type: "object",
     properties: {
         racunId: {
@@ -22,5 +22,5 @@ const IObrisiValidator = ajv.compile({
     additionalProperties: false,
 });
 
-export {IObrisi};
-export {IObrisiValidator};
+export {IEditIsAktivan};
+export {IEditIsAktivanValidator};
