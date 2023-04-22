@@ -28,9 +28,17 @@ export default class RouterRacun implements IRouter {
             racunControler.add.bind(racunControler));
 
         aplication.post(
-           "/editIsAktivan", 
-           AuthMiddleware.getVerifier("sluzbenik"),
-            racunControler.isPotpisao.bind(racunControler));    
+            "/editIsAktivan",
+            AuthMiddleware.getVerifier("sluzbenik"),
+            racunControler.editIsAktivan.bind(racunControler)
+       ); 
+       
+        aplication.post(
+            "/obrisiPotpisivanje",
+            AuthMiddleware.getVerifier("sluzbenik"),
+            racunControler.deleteRacun.bind(racunControler)
+   );  
+
         aplication.get(
             "/racunKorisnikSluzbenik", 
             AuthMiddleware.getVerifier("sluzbenik"),
@@ -40,9 +48,17 @@ export default class RouterRacun implements IRouter {
             AuthMiddleware.getVerifier("sluzbenik"),
             racunControler.obrisiRacun.bind(racunControler));  
 
-        aplication.post(
+        aplication.get(
             "/obrisiSveKorisnik", 
             AuthMiddleware.getVerifier("sluzbenik"),
             racunControler.obrisiSveZaKorisnika.bind(racunControler));
+
+        aplication.post(
+            "/obrisiPoslednjiRacun", 
+            AuthMiddleware.getVerifier("sluzbenik"),
+            racunControler.obrisiPoslednji.bind(racunControler));
+            
     }
+
+   
 }

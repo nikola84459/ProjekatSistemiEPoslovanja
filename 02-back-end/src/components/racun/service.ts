@@ -4,12 +4,15 @@ import RacunModel, { RacunValuta } from './model';
 import ValutaService from '../valuta/service';
 import IModelAdapterOptions from '../../../common/IModelAdapterOptions.interface';
 import BaseService from '../../../common/BaseService';
+import KorisnikModel from '../korisnik/model';
+import { resolve } from 'path';
 
 class RacunModelAdapterOptions implements IModelAdapterOptions {
     loadValuta = false;
+    loadKorisnik = false;
 }
 
-class RacunService extends BaseService<RacunModel> {
+export default class RacunService extends BaseService<RacunModel> {
    
     protected async adaptModel (
         row: any,
@@ -27,6 +30,12 @@ class RacunService extends BaseService<RacunModel> {
         if(options.loadValuta) {
             item.racun_valuta = await this.getByRacunValuta(item.racun_id);
                         
+        }
+
+        const korisnikModel = await this.getServices().korisnikService.getById(item.korisnik_id);
+
+        if(korisnikModel instanceof KorisnikModel) {
+            item.korisnik = korisnikModel;
         }
 
         return item;
@@ -115,12 +124,38 @@ class RacunService extends BaseService<RacunModel> {
     }
   
     public async getByRacunNumber(brRacuna: string, options: Partial<RacunModelAdapterOptions> = {}): Promise<RacunModel | null | IErrorResponse> {
-        return await this.getByFieldName(
-            "racun",
-            "br_racuna",
-            brRacuna,
-            options
-        )
+        return new Promise<RacunModel | null | IErrorResponse>(resolve => {
+            const sql = `SELECT
+                            *
+                        FROM
+                            racun
+                        WHERE
+                            br_racuna = ? AND is_aktivan = 1`
+            this.db.execute(sql, [brRacuna])
+            .then(async res => {
+                const [ rows, columns ] = res;
+                
+                if(!Array.isArray(rows)) {
+                    resolve(null);
+                    return;
+                }
+
+                if(rows.length === 0) {
+                    resolve(null);
+                    return;
+                }
+
+                resolve(
+                    await this.adaptModel(rows[0], options)
+                );
+            })                 
+        })
+        //return await this.getByFieldName(
+           // "racun",
+           // "br_racuna",
+           // brRacuna,
+          //  options
+        //)
     }   
         
     public async editStanje(stanje: number, valuta_id: number, racunId: number) {
@@ -160,6 +195,7 @@ class RacunService extends BaseService<RacunModel> {
                                         stanje = ?`
                         obecanje.push(this.db.execute(sql1, [racunId, i, 0]));                
                     }
+                                                 
 
                     Promise.all(obecanje)
                     .then(async () => {
@@ -199,8 +235,8 @@ class RacunService extends BaseService<RacunModel> {
         return this.adaptModel(rows[0]);
     }
 
-    public async deleteRacun(racunId: number): Promise<RacunModel | IErrorResponse> {
-        return new Promise<RacunModel | IErrorResponse>(async reslove => {
+    public async deleteRacun(racunId: number): Promise<IErrorResponse> {
+        return new Promise<IErrorResponse>(async reslove => {
             const obecanje = [];
 
            const sql1 = "DELETE FROM racun_valuta WHERE racun_id = ?";
@@ -208,9 +244,15 @@ class RacunService extends BaseService<RacunModel> {
           
            const sql2 = "DELETE FROM racun WHERE racun_id = ?"
            obecanje.push(this.db.execute(sql2, [racunId]));
+          
 
            Promise.all(obecanje)
            .then(async () => {
+                reslove({
+                    errorCode: 0,
+                    errorMessage: "Obrisano"
+                })
+
                 this.db.commit(); 
            })
            .catch(async err => {
@@ -223,15 +265,51 @@ class RacunService extends BaseService<RacunModel> {
         })
 }
 
-    public async editIsAktivan(racunId: number, isAktivan: number) {
-        const sql = `UPDATE 
-                        racun
-                    SET
-                        is_aktivan = ?
-                    WHERE 
-                        racun_id = ?`
-        this.db.execute(sql, [isAktivan,racunId])                
-    }
-}
+    public async editIsAktivan(racunId: number, isAktivanRacun: number, korisnikId: number, isAktivanKorisnik: number = 0, datumBrisanja: string = null): Promise<RacunModel | IErrorResponse> {
+        return new Promise<RacunModel | IErrorResponse>(async resolve => {
+            this.db.beginTransaction()
+            .then(async () => {
+                const sql = `UPDATE 
+                                racun
+                            SET
+                                is_aktivan = ?
+                            WHERE 
+                                racun_id = ?`
+                await this.db.execute(sql, [isAktivanRacun,racunId])
+            })
+            .then(async () => {
+                const sql = `UPDATE
+                                korisnik
+                            SET
+                                is_aktivan = ?,
+                                datum_brisanja = ?
+                            WHERE
+                                korisnik_id = ?`
+                this.db.execute(sql, [isAktivanKorisnik, datumBrisanja, korisnikId])
+                .then(async () => {
+                    await this.db.commit();
 
-export default RacunService;
+                    resolve(await this.getById(racunId));
+                })
+                .catch(async err => {
+                    this.db.rollback();
+
+                    resolve({
+                        errorCode: err?.errno,
+                        errorMessage: err?.sqlMessage
+                    })
+                })               
+            })
+            .catch(async err => {
+                this.db.rollback();
+
+                resolve({
+                    errorCode: err?.errno,
+                    errorMessage: err?.sqlMessage
+                })
+            })
+                   
+        })
+    }
+
+}

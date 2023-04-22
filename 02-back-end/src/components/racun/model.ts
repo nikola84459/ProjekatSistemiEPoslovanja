@@ -1,5 +1,6 @@
 import IModel from "../../../common/IModel.interface";
 import ValutaModel from '../valuta/model';
+import KorisnikModel from '../korisnik/model';
 
 class RacunModel implements IModel {
     racun_id: number;
@@ -8,6 +9,7 @@ class RacunModel implements IModel {
     racun_valuta: RacunValuta[];
     stanje_u_din: number;
     korisnik_id: number;
+    korisnik: KorisnikModel;
     is_aktivan: number;
 }
 
