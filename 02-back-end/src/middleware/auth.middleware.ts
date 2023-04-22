@@ -2,6 +2,8 @@ import { NextFunction, Request, Response } from "express";
 import * as jwt from 'jsonwebtoken';
 import Config from '../config/dev';
 import ITokenData from '../components/auth/dto/ITokenData.interface';
+import BaseService from '../../common/BaseService';
+import BaseController from '../../common/BaseController';
 
 type UserRole = "korisnik" | "sluzbenik";
 
@@ -38,7 +40,6 @@ export default class AuthMiddleware {
         var rezultat;
 
         if(korisnikValidacija.isValid === false && sluzbenikValidacija.isValid === false) {
-            console.log("korisnik")
             return res.status(401).send("Token validation error: " + JSON.stringify(korisnikValidacija) + " " + JSON.stringify(sluzbenikValidacija));
         }
 
@@ -55,10 +56,9 @@ export default class AuthMiddleware {
         const data: ITokenData = rezultat as ITokenData;
 
         if(!allowedRoles.includes(data.role)) {
-            console.log("uloga")
             return res.status(403).send("Pristup je odbijen za ovu ulogu korisnika.");
         }
-
+                
         req.authorized = data;
 
         next();
