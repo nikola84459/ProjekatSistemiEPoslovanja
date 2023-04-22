@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import IConfig from './iconfig.interface';
+import IConfig from '../../common/Iconfig.interface';
 import * as dotenv from "dotenv"
 
 const dotEnvResult = dotenv.config();
