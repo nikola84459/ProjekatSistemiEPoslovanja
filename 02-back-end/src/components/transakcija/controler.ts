@@ -12,6 +12,7 @@ import { IIsplataNovcaSve, IIsplataNovcaSveValidator } from './dto/IIsplataNovca
 import KorisnikModel from '../korisnik/model';
 import * as nodemailer from "nodemailer"
 import Config from '../../config/dev';
+import ValutaModel from '../valuta/model';
 
 export default class TransakcijaController extends BaseController {
     isPogresnaValuta: boolean;
@@ -46,27 +47,6 @@ export default class TransakcijaController extends BaseController {
        
         res.send(transakcije);
             
-    }
-
-    padTo2Digits(num: number): string {
-       return num.toString().padStart(2, '0');
-    }
-
-    private dateAndTime() {
-        const datum: Date = new Date();
-        const datumIVreme = [
-            datum.getFullYear(),
-            this.padTo2Digits(datum.getMonth() + 1),
-            this.padTo2Digits(datum.getDate()),
-          ].join('-') +
-          ' ' +
-          [
-            this.padTo2Digits(datum.getHours()),
-            this.padTo2Digits(datum.getMinutes()),
-            this.padTo2Digits(datum.getSeconds()),
-          ].join(':') 
-
-          return datumIVreme;
     }
 
     private async checkIsplata(racunPlatioc: RacunModel, valutaId: number, iznos: number): Promise<boolean> {
@@ -106,8 +86,8 @@ export default class TransakcijaController extends BaseController {
             return;
         } 
         
-        const datumIVreme = this.dateAndTime();
-
+        const datumIVreme = new Date().toLocaleString("sv", {timeZone: 'Europe/Belgrade'});
+                            
         const racunPlatioc = await this.services.racunService.getById(data.racun_id, { loadValuta: true });
         const racunPrimaoc = await this.services.racunService.getByRacunNumber(data.brRacuna, { loadValuta: true });
 
@@ -115,6 +95,8 @@ export default class TransakcijaController extends BaseController {
         let stanjePrimaoc: number = null;
 
         let racunIdPrimaoca: number = null;
+
+        console.log(racunPrimaoc);
 
         const korisnikId = req.authorized.id;
        
@@ -139,7 +121,7 @@ export default class TransakcijaController extends BaseController {
 
           
             if(await this.checkIsplata(racunPlatioc, data.valuta_id, data.iznos)) {
-                stanjePlatioc = this.stanjeNaRacunu - Number(data.iznos);
+                stanjePlatioc = Number(this.stanjeNaRacunu) - Number(data.iznos);
             } else {
                 if(this.isPogresnaValuta) {
                     return res.status(400).send("Nije moguće izvršiti transakciju. Pogrešna valuta.")
@@ -150,7 +132,7 @@ export default class TransakcijaController extends BaseController {
            
 
             if(await this.checkValutaPrimaoc(racunPrimaoc, data.valuta_id)) {
-                stanjePrimaoc = this.stanjeNaRacunu + Number(data.iznos);
+                stanjePrimaoc = Number(this.stanjeNaRacunu) + Number(data.iznos);
             } else {
                 return res.status(400).send("Računi moraju biti u istim valutama.")
             }
@@ -162,6 +144,7 @@ export default class TransakcijaController extends BaseController {
             let isTrue = true;
 
             do {
+                console.log(stanjePrimaoc);
                 brTransakcije = String(new Date().valueOf());
                 upis = await this.services.transakcijaService.add(brTransakcije, data.iznos, datumIVreme, data.svrha, data.racun_id,
                 racunIdPrimaoca ,"uplata", "isplata", data.valuta_id, null, stanjePlatioc, stanjePrimaoc);    
@@ -177,15 +160,19 @@ export default class TransakcijaController extends BaseController {
                 }
             }
             const podaci = [];
+            const valuta = await this.services.valutaService.getBayId(data.valuta_id)
+            
             const primaoc = await this.services.korisnikService.getById(racunPrimaoc.korisnik_id);
-            if(primaoc instanceof KorisnikModel) {
+            if(primaoc instanceof KorisnikModel && valuta instanceof ValutaModel) {
                 podaci.push({
                     brojTransakcije: brTransakcije,
                     iznos: data.iznos,
                     primaocIme: primaoc.ime,
                     primaocPrezime: primaoc.prezime,
-                    brRacunPrimaoc: data.brRacuna
+                    brRacunPrimaoc: data.brRacuna,
+                    valutaNaziv: valuta.sifra.toLocaleUpperCase()
                 })
+                
             }
             const korisnik = await this.services.korisnikService.getById(korisnikId);
             if(korisnik instanceof KorisnikModel) {
@@ -278,7 +265,7 @@ export default class TransakcijaController extends BaseController {
             return; 
         }
         
-        const datumIVreme = this.dateAndTime();
+        const datumIVreme = new Date().toLocaleString("sv", {timeZone: 'Europe/Belgrade'});
 
         let novoStanjeIsplata: number = null;
         let novoStanjeUplata: number = null;
@@ -288,9 +275,16 @@ export default class TransakcijaController extends BaseController {
         let valuta1 = null;
         let valuta2 = null;
 
+        let valutaSifra = null;
+
         const racunPlatioc = await this.services.racunService.getById(data.racun_id, { loadValuta: true });
         const racunPrimaoc = await this.services.racunService.getById(data.racun_primaoc_id, { loadValuta: true });
 
+        const valuta = await this.services.valutaService.getBayId(data.valuta_id)
+        
+        if(valuta instanceof ValutaModel) {
+            valutaSifra = valuta.sifra.toLocaleUpperCase();
+        }
         
         if(data.isKupovina) {
             if(racunPlatioc instanceof RacunModel && racunPrimaoc instanceof RacunModel) {
@@ -310,8 +304,8 @@ export default class TransakcijaController extends BaseController {
                 }
                 
                 if(await this.checkPrimaocMenjacnica(racunPrimaoc, data.valuta_id)) {
-                    novoStanjeUplata = this.stanjeNaRacunu + (data.iznos / this.kupovniKurs);
-                    iznosUValuti = data.iznos / this.kupovniKurs;   
+                    iznosUValuti = data.iznos / this.kupovniKurs;
+                    novoStanjeUplata = Number(this.stanjeNaRacunu) + iznosUValuti;
                     valuta1 = data.valuta_id; 
                 } else {
                     if(this.isPogresnaValuta) {
@@ -331,8 +325,8 @@ export default class TransakcijaController extends BaseController {
                 }
                 
                 if(await this.checkRacunPlatiocMenjacnicaProdaja(racunPlatioc, data.valuta_id, data.iznos)) {
-                    novoStanjeIsplata = this.stanjeNaRacunu - Number(data.iznos);
-                    iznosUValuti = Number(data.iznos) * this.prodajniKurs;
+                    novoStanjeIsplata = Number(this.stanjeNaRacunu) - Number(data.iznos);
+                    iznosUValuti = Number(data.iznos) * this.prodajniKurs
                     valuta2 = this.valutaRacuna;
                 } else {
                     if(this.isPogresnaValuta) {
@@ -348,11 +342,12 @@ export default class TransakcijaController extends BaseController {
 
                 if(await this.checkRacunPrimaocMenjacnicaProdaja(racunPrimaoc)) {
                     valuta1 = this.valutaRacuna;
-                    novoStanjeUplata = this.stanjeNaRacunu + iznosUValuti;
+                    novoStanjeUplata = Number(this.stanjeNaRacunu) + iznosUValuti;
                 }
             } 
         }
 
+        
         let upis: TransakcijaModel | IErrorResponse = null;
         let brTransakcije = null;
 
@@ -372,7 +367,9 @@ export default class TransakcijaController extends BaseController {
                     iznosPrimaoc: iznosUValuti,
                     brojTransakcije: brTransakcije,
                     brojRacunPlatioc: racunPlatioc.br_racuna,
-                    brojRacunPrimaoc: racunPrimaoc.br_racuna                     
+                    brojRacunPrimaoc: racunPrimaoc.br_racuna,
+                    valutaNaziv: valutaSifra,
+                    isKupovina: data.isKupovina                     
                 })
 
                 this.sendMailTransakcija(korisnik, podaci, true);
@@ -396,8 +393,8 @@ export default class TransakcijaController extends BaseController {
 
         let stanje: number = null;
 
-        const datumIVreme = this.dateAndTime();
-
+        const datumIVreme = new Date().toLocaleString("sv", {timeZone: 'Europe/Belgrade'});
+               
         if(racun instanceof RacunModel) {
             if(await racun.korisnik_id !== req.session["korisnik"]) {
                 return res.status(400).send("Nije moguće izvršiti transakciju.");
@@ -408,9 +405,8 @@ export default class TransakcijaController extends BaseController {
             }
 
             if(await this.checkIsplata(racun, data.valuta_id, data.iznos)) {
-                stanje = this.stanjeNaRacunu - Number(data.iznos);
-                console.log(stanje);   
-                
+                stanje = Number(this.stanjeNaRacunu) - Number(data.iznos);
+                           
             } else {
                 if(this.isPogresnaValuta) {
                     return res.status(400).send("Nije moguće izvršiti transakciju. Pogrešna valuta.");
@@ -441,14 +437,14 @@ export default class TransakcijaController extends BaseController {
             return;   
         }
 
-        const datumIVreme = this.dateAndTime();
+        const datumIVreme = new Date().toLocaleString("sv", {timeZone: 'Europe/Belgrade'});
 
         const racun = await this.services.racunService.getById(id.racun_id, { loadValuta: true });
 
         if(racun instanceof RacunModel) {
             const iznosValuta = [];
             for(const i of await racun.racun_valuta) {
-                const novoStanje = i.stanje - i.stanje;
+                const novoStanje = Number(i.stanje) - Number(i.stanje);
                 
                 let upis: TransakcijaModel | IErrorResponse = null;               
 
@@ -514,7 +510,7 @@ export default class TransakcijaController extends BaseController {
                             <p>Naziv primaoca: ${podaci[0].primaocIme} ${podaci[0].primaocPrezime}</p>
                             <p>Broj računa primaoca: ${podaci[0].brRacunPrimaoc}</p>
                             <p>Broj transakcije: ${podaci[0].brojTransakcije}</p>
-                            <p>Iznos: ${podaci[0].iznos}</p>
+                            <p>Iznos: ${podaci[0].iznos} <b>${podaci[0].valutaNaziv}</b></p>
                             <br>
                             <p>Srdačan pozdrav,</p>
                             <p>Vaša Banka</p>
@@ -523,6 +519,17 @@ export default class TransakcijaController extends BaseController {
                     </html>
               ` 
             } else {
+                let valutaPlatioc: string = null;
+                let valutaPrimaoc: string = null;
+                
+                if(podaci[0].isKupovina) {
+                    valutaPlatioc = "RSD";
+                    valutaPrimaoc = podaci[0].valutaNaziv.toLocaleUpperCase();
+                } else {
+                    valutaPlatioc = podaci[0].valutaNaziv.toLocaleUpperCase() 
+                    valutaPrimaoc = "RSD"
+                }
+
                 poruka = `
                     <!doctype html>
                     <html>
@@ -538,8 +545,8 @@ export default class TransakcijaController extends BaseController {
                             <p>Broj računa sa kog se uplaćuje novac: ${podaci[0].brojRacunPlatioc}</p>
                             <p>Broj na koji se uplaćuje novac: ${podaci[0].brojRacunPrimaoc}</p>
                             <p>Broj transakcije: ${podaci[0].brojTransakcije}</p>
-                            <p>Iznos u valuti računa platioca: ${podaci[0].iznosPlatioc}</p>
-                            <p>Iznos u valuti računa primaoca: ${podaci[0].iznosPrimaoc}</p>
+                            <p>Iznos u valuti računa platioca: ${podaci[0].iznosPlatioc} <b>${valutaPlatioc}</b></p>
+                            <p>Iznos u valuti računa primaoca: ${podaci[0].iznosPrimaoc} <b>${valutaPrimaoc}</b></p>
                             <br>
                             <p>Srdačan pozdrav,</p>
                             <p>Vaša Banka</p>
