@@ -207,11 +207,11 @@ export default class KorisnikControler extends BaseController {
         const korisnikId = req.session["korisnik"];
 
         const racuni = await this.services.racunService.getByKorisnikId(korisnikId);
-        const datumBrisanja = String(new Date().getFullYear()) + "-" +  String(new Date().getMonth()) + "-" + String(new Date().getDay());       
-        
+        const datumBrisanja = String(new Date().getFullYear()) + "-" +  String(new Date().getMonth() + 1) + "-" + String(new Date().getDate());
+                        
         for(const racun of racuni) {
             if(await racun.is_aktivan === 1) {
-                return res.sendStatus(400);
+                return res.send(400);
             }
         }   
         
