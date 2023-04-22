@@ -14,7 +14,7 @@ const IPrenosNovcaValidator = ajv.compile({
     type: "object",
     properties: {
         iznos: {
-            type: "integer",
+            type: "number",
             
         },
 

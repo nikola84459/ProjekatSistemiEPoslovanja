@@ -15,7 +15,7 @@ const IMenjacnicaValidator = ajv.compile({
     type: "object",
     properties: {
         iznos: {
-            type: "integer",
+            type: "number",
             
         },
 
