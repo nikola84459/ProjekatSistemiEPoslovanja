@@ -5,7 +5,10 @@ interface IEditKorisnikSluzbenik {
     prezime: string,
     brTelefona: string,
     brLicneKarte: string,
-    adresa: string;
+    ulica: string;
+    broj: string;
+    mesto: string;
+    email: string;
 }
 
 const ajv = new Ajv();
@@ -37,22 +40,45 @@ const IEditKorisnikSluzbenikValidator = ajv.compile({
             maxLength: 11,     
         },
 
-        adresa: {
+        ulica: {
             type: "string",
             minLength: 2,
-            maxLength: 255,     
+            maxLength: 150,     
         },
 
-        required: [
-            "ime",
-            "prezime",
-            "brTelefona",
-            "brLicneKarte",
-            "adresa"
-        ],
+        broj: {
+            type: "string",
+            minLength: 1,
+            maxLength: 5,     
+        },
 
-        additionalProperties: false,
+        mesto: {
+            type: "string",
+            minLength: 2,
+            maxLength: 150,     
+        },
+
+        email: {
+            type: "string",
+            minLength: 5,
+            maxLength: 100
+        }
+    
+        
     }, 
+
+    required: [
+        "ime",
+        "prezime",
+        "brTelefona",
+        "brLicneKarte",
+        "mesto",
+        "ulica",
+        "broj",
+        "email"
+    ],    
+
+    additionalProperties: false,
 });
 
 export {IEditKorisnikSluzbenik};

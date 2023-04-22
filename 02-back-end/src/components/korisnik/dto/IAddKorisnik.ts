@@ -6,8 +6,14 @@ interface IAddKorisnik {
     jmbg: string;
     brTelefona: string;
     brLicneKarte: string;
-    adresa: string;
+    ulica: string;
+    broj: string;
+    mesto: string
     email: string;
+    mestoRodjenja: string;
+    drzavaRodjenja: string;
+    opstinaRodjenja: string;
+    datumRodjenja: string;
 }
 
 const ajv = new Ajv();
@@ -43,7 +49,19 @@ const IAddKorisnikValidator = ajv.compile({
             maxLength: 11
         },
 
-        adresa: {
+        ulica: {
+            type: "string",
+            minLength: 2,
+            maxLength: 170
+        },
+
+        broj: {
+            type: "string",
+            minLength: 1,
+            maxLength: 5,
+        },
+
+        mesto: {
             type: "string",
             minLength: 2,
             maxLength: 170
@@ -53,8 +71,31 @@ const IAddKorisnikValidator = ajv.compile({
             type: "string",
             minLength: 2,
             maxLength: 200
-        }
+        },
 
+        mestoRodjenja: {
+            type: "string",
+            minLength: 2,
+            maxLength: 150
+        },
+
+        drzavaRodjenja: {
+            type: "string",
+            minLength: 2,
+            maxLength: 150
+        },
+        
+        opstinaRodjenja: {
+            type: "string",
+            minLength: 2,
+            maxLength: 150
+        },
+        
+        datumRodjenja: {
+            type: "string",
+            minLength: 1,
+            maxLength: 15
+        }
     },
 
     required: [
@@ -62,9 +103,14 @@ const IAddKorisnikValidator = ajv.compile({
         "prezime",
         "jmbg",
         "brLicneKarte",
-        "adresa",
-        "email"
-        
+        "ulica",
+        "broj",
+        "mesto",
+        "email",
+        "mestoRodjenja",
+        "drzavaRodjenja",
+        "opstinaRodjenja",
+        "datumRodjenja"
     ],
 
     additionalProperties: false

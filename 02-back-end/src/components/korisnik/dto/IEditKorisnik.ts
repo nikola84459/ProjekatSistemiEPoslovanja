@@ -4,6 +4,7 @@ interface IEditKorisnik {
     password_hash_old: string;
     password_hash: string;
     password_hash_ponovo: string;
+    isPrvaPrijava: boolean
 }
 
 const ajv = new Ajv();
@@ -27,6 +28,10 @@ const IEditKorisnikValidator = ajv.compile({
             type: "string",
             minLength: 8,
             maxLength: 255    
+        },
+
+        isPrvaPrijava: {
+            type: "boolean"
         }
 
     },
@@ -34,7 +39,8 @@ const IEditKorisnikValidator = ajv.compile({
     required: [
         "password_hash_old",
         "password_hash",
-        "password_hash_ponovo"
+        "password_hash_ponovo",
+        "isPrvaPrijava"
     ],
 
     additionalProperties: false,
