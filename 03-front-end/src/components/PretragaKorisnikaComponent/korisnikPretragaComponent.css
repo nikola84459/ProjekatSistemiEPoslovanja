@@ -1,0 +1,15 @@
+.korisnikTable {
+    margin-top: 9rem;
+}
+
+.dugmePretraga{
+    margin-top: 1.4rem;
+}
+
+#aktivan {
+    color: green;
+}
+
+#neaktivan {
+    color: red;
+}

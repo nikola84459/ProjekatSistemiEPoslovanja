@@ -1,0 +1,31 @@
+.dugmeObrisi {
+    margin-left: 0.4rem;
+}
+
+.otvoriNovi {
+    margin-left: 0.4rem;
+}
+
+.boja {
+    color: green;
+}
+
+.dugmeZatvori {
+    float: right;
+}
+
+.podaci {
+    margin-top: 3.5rem;
+}
+
+.isplataDugme {
+    margin-left: 0.35rem;
+}
+
+#aktivan {
+    color: green
+}
+
+#neaktivan {
+    color: red
+}
