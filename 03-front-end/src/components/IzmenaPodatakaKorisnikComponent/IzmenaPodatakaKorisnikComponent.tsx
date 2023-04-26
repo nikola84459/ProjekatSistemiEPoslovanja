@@ -1,6 +1,6 @@
 import KorisnikModel from '../../../../03-back-end/src/components/korisnik/model';
 import BasePage from '../BasePage/BasePage';
-import { Container, Form, Button, Card, Table, Spinner, Col, Row } from 'react-bootstrap';
+import { Container, Form, Button, Card, Table, Spinner, Col, Row, Alert } from 'react-bootstrap';
 import KorisnikService from '../../services/KorisnikService';
 import { Link } from "react-router-dom"
 import getLocationAndIp, { addAktivnost } from '../../Dnevnik/Dnevnik';
@@ -20,6 +20,7 @@ class IzmenaPodatakaKorisnikComponentState {
     datumRodjenja: string;
     isUspesno: boolean;
     isUProcesu: boolean;
+    poruka: string;
     
 }
 
@@ -41,7 +42,8 @@ export default class IzmenaPodatakaKorisnikComponent extends BasePage<{}> {
             brojPrebivalista: "",
             datumRodjenja: "",
             isUspesno: false,
-            isUProcesu: false
+            isUProcesu: false,
+            poruka: "" 
             
         }
     }
@@ -79,7 +81,12 @@ export default class IzmenaPodatakaKorisnikComponent extends BasePage<{}> {
         return (
             <Container>
                 <NaslovComponent poruka="Izmena podataka korisnika" />
+                { 
+                    this.state.poruka !== "" ? (
+                        <Alert className="alert" key={"danger"} variant={"danger"}>{this.state.poruka}</Alert>
+                ): ""}
                 {
+                     
                     !this.state.isUspesno ? (                   
                 <><Form className="fromaDodavanjeNovogKorisnika">
                 <Row className="mb-4">
@@ -102,7 +109,7 @@ export default class IzmenaPodatakaKorisnikComponent extends BasePage<{}> {
                         placeholder="Unesite prezime"
                         name="prezime"
                     />
-                    <Form.Control.Feedback>U redu</Form.Control.Feedback>
+                    
                 </Form.Group>
                 <Form.Group as={Col} md="3" controlId="validationCustomUsername">
                     <Form.Label>JMBG</Form.Label>
@@ -113,13 +120,13 @@ export default class IzmenaPodatakaKorisnikComponent extends BasePage<{}> {
                         name="jmbg"
                     />
                 </Form.Group>
-                <Form.Group as={Col} md="3" controlId="validationCustomUsername">
+                <Form.Group as={Col} md="3" controlId="validationCustom02">
                     <Form.Label>Broj lične karte</Form.Label>
-                    <Form.Control value={this.state.brLicneKarte} onChange={e => {this.uzmiPodatke(e)}}
-                        type="text"
-                        placeholder="Unesite broj lične karte korisnika"
+                    <Form.Control value={this.state?.brLicneKarte} onChange={e => {this.uzmiPodatke(e)}}
                         required
-                        name="brLk"
+                        type="text"
+                        placeholder="Unesite prezime"
+                        name="brLicneKarte"
                     />
                 </Form.Group>
             </Row>
@@ -283,6 +290,11 @@ export default class IzmenaPodatakaKorisnikComponent extends BasePage<{}> {
                     isIzmena: false
                 })
                addAktivnost(window.location.href, "Izmenjeni podaci za korisnika.", "sluzbenik");
+            } else {
+                this.setState({
+                    isIzmena: false,
+                    poruka: res.message
+                })
             }
         })
     }
