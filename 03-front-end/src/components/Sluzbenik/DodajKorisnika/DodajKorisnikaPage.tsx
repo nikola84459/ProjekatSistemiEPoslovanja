@@ -244,7 +244,9 @@ export default class DodajKorisnikaPage extends BasePage<{}> {
                 )
                 .then(res => {
                     if(!res.success) {
-                        if(res.message) {
+                        console.log(res.message)
+                        if(res.message === "neaktivan") {
+                            console.log("ušao ovde");
                             return this.setState({
                                 isNeaktivan: true
                             })
