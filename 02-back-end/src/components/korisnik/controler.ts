@@ -87,12 +87,12 @@ export default class KorisnikControler extends BaseController {
                 const korisnik = await this.services.korisnikService.pretragaByJmbgAndBrLk(data.jmbg, null);
                 
                 if(korisnik instanceof KorisnikModel) {
-                    if(korisnik.datum_brisanja !== null) {
+                    if(korisnik.datum_brisanja === undefined) {
                         const racun = await this.services.racunService.getByKorisnikId(korisnik.korisnik_id);
                         
                         if(racun === null) {
                             req.session["korisnik"] = (await korisnik).korisnik_id
-                            return res.status(400).send(true);
+                            return res.status(400).send("neaktivan");
                         }
                     }
                         
@@ -199,8 +199,14 @@ export default class KorisnikControler extends BaseController {
 
         let korisnikId = req.session["korisnik"];
      
-        const noviKorisnik = await this.services.korisnikService.edit(data.ime, data.prezime, data.brTelefona, data.brLicneKarte, data.ulica, data.broj, data.mesto, korisnikId, null, data.email, null);
-        res.send(noviKorisnik);    
+        const korisnik: KorisnikModel | IErrorResponse = await this.services.korisnikService.edit(data.ime, data.prezime, data.brTelefona, data.brLicneKarte, data.ulica, data.broj, data.mesto, korisnikId, null, data.email, null);
+
+        if(!(korisnik instanceof KorisnikModel)) {
+            if(korisnik.errorMessage.includes("uq_korisnik_br_licne_karte")) {
+                return res.status(400).send("Korisnik sa unetim brojm lične karte već postoji.");
+            }
+        }
+        res.send(korisnik);    
     }
 
     async obrisiKorisnika(req: Request, res: Response, neextFunction: NextFunction) {
